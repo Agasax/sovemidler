@@ -1,0 +1,49 @@
+---
+title: "Sovemidler"
+author: "Lars Mølgaard Saxhaug"
+date: "6/30/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(ggthemes)
+library(here)
+library(rio)
+```
+
+
+```{r data}
+rapport <- import(here("data","rapport.csv"))
+melatonin <- import(here("data","sedativa.csv"))
+```
+
+```{r}
+rapport  %>%
+  mutate(medikament=factor(Valuedrug,labels = c("Benzodiazepiner","Z-hypnotika","Melatonin")),År=as.integer(Valuetime)) %>%
+  rename("pertusen"=SumPrevalens_pr_1000) %>%
+  ggplot(aes(x=År,y=pertusen,colour=medikament))+
+  geom_line(size=1.5)+
+  theme_fivethirtyeight()+
+  scale_x_continuous(breaks = 2010:2020)+
+  scale_colour_fivethirtyeight(name="Medikament")+
+  ylab("Antall brukere per 1000")+
+  labs(title = "Sovemedisin blant innbyggere 15-19 år",subtitle = "Antall brukere per 1000")
+
+```
+
+
+```{r melatonin}
+melatonin%>% select(starts_with("V"), SumAntall_unike_pasienter) %>%  pivot_wider(names_from = Valuedrug,values_from=SumAntall_unike_pasienter) %>%
+  rename("Melatonin"=N05CH) %>% mutate("Andre enn melatonin"=`Sovemidler og beroligende midler`-Melatonin) %>%
+  pivot_longer(c("Melatonin","Andre enn melatonin")) %>%
+  ggplot(aes(x=Valuetime,y=value,colour=name))+
+  geom_line()+
+  theme_fivethirtyeight()+
+  scale_colour_fivethirtyeight(name=NULL)+
+  scale_x_continuous(breaks = seq(2010,2020,by = 2))+
+  labs(title = "Bruk av sovemidler blant 15-19 åringer",subtitle = "Fordelt på melatonin og andre sovemedisiner",caption = "Kilde: reseptregisteret\n@load_dependent")
+
+```
+
